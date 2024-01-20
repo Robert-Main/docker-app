@@ -1,0 +1,69 @@
+# specify the version of docker-compose
+version: "3.8"
+
+# define the services/containers to be run
+services:
+
+  web:
+    depends_on: 
+      - api
+   
+    build: ./frontend
+    
+    ports:
+      - 5173:5173
+    # specify the environment variables for the web service
+    # these environment variables will be available inside the container
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+    develop:
+      watch:
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/package-lock.json
+          action: rebuild
+        - path: ./frontend
+          target: /app
+          action: sync
+
+  # define the api service/container
+  api: 
+    depends_on: 
+      - db
+
+    # specify the build context for the api service
+    build: ./backend
+ 
+    ports: 
+      - 8000:8000
+
+    environment: 
+      DB_URL: mongodb://db/anime
+    
+    # establish docker compose watch mode for the api service
+    develop:
+      watch:
+    
+        - path: ./backend/package.json
+          action: rebuild
+        - path: ./backend/package-lock.json
+          action: rebuild
+        
+        - path: ./backend
+          target: /app
+          action: sync
+
+  # define the db service
+  db:
+
+    image: mongo:latest
+    ports:
+      - 27017:27017
+
+    volumes:
+      - anime:/data/db
+
+# define the volumes to be used by the services
+volumes:
+  anime:
